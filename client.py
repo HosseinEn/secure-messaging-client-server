@@ -1,7 +1,7 @@
 import hashlib
 import socket
 import ast
-import math
+import RSA
 from Crypto.Util import Counter
 from Crypto.Cipher import AES
 
@@ -23,13 +23,13 @@ def dh_generate():
 def rsa_generate():
     pass
 
-def calculate_key(mode: str):
+def encrypt_key(mode: str):
     global public_key
 
     if mode == 'RSA':
-        C = pow(SHARED_KEY, public_key['e'])
-        C = math.fmod(C, public_key['n'])
-        return C
+        # C = pow(SHARED_KEY, public_key['e'])
+        # C = math.fmod(C, public_key['n'])
+        return RSA.rsa_encrypt(public_key, SHARED_KEY)
 
 
 def rcv_encrypted_msg():
@@ -52,7 +52,7 @@ def process_response(client_socket, response):
     if ctrl == 'public_key':
         public_key = value
         # encryption
-        C = calculate_key('RSA')
+        C = encrypt_key('RSA')
         data = f'shared_key:{C}'
         client_socket.send(data.encode('utf-8'))
         pass
@@ -79,7 +79,7 @@ public_key = ast.literal_eval(response.split("@", 1)[1])
 
 
 # encryption
-C = calculate_key('RSA')
+C = encrypt_key('RSA')
 data = f'shared_key@{C}'
 client_socket.send(data.encode('utf-8'))
 
@@ -94,11 +94,14 @@ while True:
     encrypted_msg = encobj.encrypt(msg.encode())
     client_socket.send(encrypted_msg)
 
-# while True:
-    
-#     # Receive the response from the server
-#     response = client_socket.recv(1024).decode('utf-8')
-#     process_response(client_socket, response)
-    
-    # Decrypt the response using AES-CTR with the shared secret key
-    # ...
+    data = client_socket.recv(1024)
+
+    if not data:
+        break
+
+    hexIV = hex(IV)[2:8].zfill(16)
+    encobj = AES.new(hashlib.sha256(str(SHARED_KEY).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
+    plaintext = encobj.decrypt(data)
+    print("Received data: ", data)
+    print("Decrypted msg in server: ", plaintext.decode())
+

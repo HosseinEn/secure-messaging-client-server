@@ -4,7 +4,7 @@ import threading
 import math
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
-# import RSA2
+import RSA
 
 HOST = '127.0.0.1'
 PORT = 3000
@@ -47,13 +47,13 @@ def rsa_generate():
     # print(f'Private key: {d, n}')
     return ({"d": d, "n": n}, {"e": e, "n": n})
 
-def calculate_key(value):
+def decrypt_key(value):
     global private_key
 
     # decryption
-    M = pow(int(float(value)), private_key['d'])
-    sk = math.fmod(M, private_key['n'])
-    return sk
+    # M = pow(int(float(value)), private_key['d'])
+    # sk = math.fmod(M, private_key['n'])
+    return RSA.rsa_decrypt(private_key, int(value))
 
 def generate_pub_priv_key():
     global exchange_mode
@@ -63,20 +63,19 @@ def generate_pub_priv_key():
     elif exchange_mode == 'DH':
         dh_generate()
     elif exchange_mode == 'RSA':
-        return rsa_generate()
+        return RSA.rsa_generate_key(113, 23)
 
 
-def encrypt_key(mode: str, shared_key):
-    global public_key
+# def encrypt_key(mode: str, shared_key):
+#     global public_key
 
-    if mode == 'ElGamal':
-        elgamal_generate()
-    elif mode == 'DH':
-        dh_generate()
-    elif mode == 'RSA':
-        C = pow(shared_key, public_key['e'])
-        C = math.fmod(C, public_key['n'])
-        return C
+#     if mode == 'ElGamal':
+#         c = elgamal_generate()
+#     elif mode == 'DH':
+#         c = dh_generate()
+#     elif mode == 'RSA':
+#         c = RSA.rsa_encrypt(public_key, shared_key)
+#     return c
 
 def process_request(client_socket, data):
     global public_key, shared_key, private_key, exchange_mode
@@ -88,14 +87,13 @@ def process_request(client_socket, data):
         (private_key, public_key) = generate_pub_priv_key(value)
         data = f'public_key:{public_key}'
         client_socket.send(str(public_key).encode('utf-8'))
-        shared_key = '1234567890'
-        key = encrypt_key(value, public_key, shared_key)
+       
 
     elif ctrl == 'msg':
         encobj = AES.new(shared_key, AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(IV.encode(), byteorder='big')))
         encobj.decrypt(value)
     elif ctrl == 'shared_key':
-        shared_key = calculate_key(value)
+        shared_key = decrypt_key(value)
 
 def send_msg_to_client(msg):
     pass
@@ -114,17 +112,29 @@ def handle_client(client_socket):
 
     data = client_socket.recv(1024).decode('utf-8')
     ctrl, value = data.split("@", 1)
-    shared_key = calculate_key(value)    
+    shared_key = decrypt_key(value)    
 
     print ('Ready for secure communication!')
+    
     while True:
         data = client_socket.recv(1024)
+
+        if not data:
+            break
+
         hexIV = hex(IV)[2:8].zfill(16)
-        # breakpoint()
         encobj = AES.new(hashlib.sha256(str(shared_key).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
         plaintext = encobj.decrypt(data)
-        breakpoint()
+        print("Received data: ", data)
         print("Decrypted msg in server: ", plaintext.decode())
+
+        
+        msg = input('Enter your message: ')
+        hexIV = hex(IV)[2:8].zfill(16)
+
+        encobj = AES.new(hashlib.sha256(str(shared_key).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
+        encrypted_msg = encobj.encrypt(msg.encode())
+        client_socket.send(encrypted_msg)
 
 
 
