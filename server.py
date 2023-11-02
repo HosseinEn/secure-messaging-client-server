@@ -25,6 +25,7 @@ def decrypt_key(value):
     elif exchange_mode == 'RSA':
         return RSA.rsa_decrypt(private_key, int(value))
 
+
 def generate_pub_priv_key():
     global exchange_mode
 
@@ -41,19 +42,15 @@ def handle_client(client_socket):
     global public_key, shared_key, private_key, exchange_mode
 
     client_address = client_socket.getpeername()
-
     data = client_socket.recv(1024).decode('utf-8')
-
     ctrl, value = data.split("@", 1)
     exchange_mode = value
     (private_key, public_key) = generate_pub_priv_key()
     data = f'public_key@{public_key}'
     client_socket.send(str(data).encode('utf-8'))
-
     data = client_socket.recv(1024).decode('utf-8')
     ctrl, value = data.split("@", 1)
     shared_key = decrypt_key(value)    
-
     print ('Ready for secure communication!')
     
     while True:
@@ -67,12 +64,9 @@ def handle_client(client_socket):
         encobj = AES.new(hashlib.sha256(str(shared_key).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
         plaintext = encobj.decrypt(data)
         print("Received data: ", data)
-        print("Decrypted msg in server: ", plaintext.decode())
-
-        
+        print("Decrypted msg in server: ", plaintext.decode())    
         msg = input('Enter your message: ')
         hexIV = hex(IV)[2:8].zfill(16)
-
         encobj = AES.new(hashlib.sha256(str(shared_key).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
         encrypted_msg = encobj.encrypt(msg.encode())
         client_socket.send(encrypted_msg)
@@ -92,8 +86,6 @@ client_list = []
 while True:
     client_socket, client_address = server_socket.accept()
     print(f"Connection established with {client_address}")
-    
     client_list.append(client_socket)
-
     client_thread = threading.Thread(target=handle_client, args=(client_socket,))
     client_thread.start()
