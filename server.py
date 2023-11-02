@@ -5,6 +5,7 @@ import math
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 import RSA
+import elgamal
 
 HOST = '127.0.0.1'
 PORT = 3000
@@ -28,15 +29,18 @@ def dh_generate():
     pass
 
 def decrypt_key(value):
-    global private_key
+    global private_key, exchange_mode
 
-    return RSA.rsa_decrypt(private_key, int(value))
+    if exchange_mode == 'ElGamal':
+        return elgamal.decrypt(private_key, value)
+    elif exchange_mode == 'RSA':
+        return RSA.rsa_decrypt(private_key, int(value))
 
 def generate_pub_priv_key():
     global exchange_mode
 
     if exchange_mode == 'ElGamal':
-        elgamal_generate()
+        return elgamal.generate_keys()
     elif exchange_mode == 'DH':
         dh_generate()
     elif exchange_mode == 'RSA':
