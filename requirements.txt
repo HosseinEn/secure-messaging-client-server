@@ -1,2 +1,0 @@
-  sockets==1.0.0
-  threaded==4.1.0
