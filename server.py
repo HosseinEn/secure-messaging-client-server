@@ -16,17 +16,6 @@ exchange_mode = None
 
 IV = 10
 
-def encrypt_msg():
-    pass
-
-def decrypt_msg():
-    pass
-
-def elgamal_generate():
-    pass
-
-def dh_generate():
-    pass
 
 def decrypt_key(value):
     global private_key, exchange_mode
@@ -42,7 +31,8 @@ def generate_pub_priv_key():
     if exchange_mode == 'ElGamal':
         return elgamal.generate_keys()
     elif exchange_mode == 'DH':
-        dh_generate()
+        # TODO implement DH
+        pass
     elif exchange_mode == 'RSA':
         return RSA.rsa_generate_key(113, 23)
 

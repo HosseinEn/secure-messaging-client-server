@@ -13,17 +13,6 @@ IV = 10
 
 # Maybe we should exchange IV too!!!
 
-
-
-def elgamal_generate():
-    pass
-
-def dh_generate():
-    pass
-
-def rsa_generate():
-    pass
-
 def encrypt_key(mode: str):
     global public_key
 
@@ -31,19 +20,9 @@ def encrypt_key(mode: str):
         return RSA.rsa_encrypt(public_key, SHARED_KEY)
     elif mode == 'ElGamal':
         return elgamal.encrypt(public_key, SHARED_KEY)
-
-
-def rcv_encrypted_msg():
-    while True:
-        data = client_socket.recv(1024).decode('utf-8')
-        if not data:
-            break
-        print(data)
-
-def send_encrypted_msg():
-    while True:
-        msg = input()
-        client_socket.send(msg.encode('utf-8'))
+    elif mode == 'DH':
+        # TODO implement DH
+        pass
 
 def ex_mode(num):
     if num == '1':
@@ -54,7 +33,7 @@ def ex_mode(num):
         return 'DH'
 
 
-EXCHANGE_MODE = ex_mode(input('Enter key exchange mode number: \n[1] RSA\n[2] ElGamal\n[3] DH\n'))
+EXCHANGE_MODE = ex_mode(input('Enter key exchange mode number: \n[1] RSA\n[2] ElGamal\n[3] DH\n\n'))
 
 
 
