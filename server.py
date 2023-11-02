@@ -1,11 +1,12 @@
 import hashlib
 import socket
 import threading
-import math
-from Crypto.Cipher import AES
-from Crypto.Util import Counter
 import RSA
 import elgamal
+from Crypto.Cipher import AES
+from Crypto.Util import Counter
+from pp import pp
+
 
 HOST = '127.0.0.1'
 PORT = 3000
@@ -51,9 +52,10 @@ def handle_client(client_socket):
     data = client_socket.recv(1024).decode('utf-8')
     ctrl, value = data.split("@", 1)
     shared_key = decrypt_key(value)    
-    print ('Ready for secure communication!')
+    print (pp(f'\nReady for secure communication using {exchange_mode}!\n', 'BM'))
     
     while True:
+        print('Waiting for messages...')
         data = client_socket.recv(1024)
 
         if not data:
@@ -63,9 +65,9 @@ def handle_client(client_socket):
         hexIV = hex(IV)[2:8].zfill(16)
         encobj = AES.new(hashlib.sha256(str(shared_key).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
         plaintext = encobj.decrypt(data)
-        print("Received data: ", data)
-        print("Decrypted msg in server: ", plaintext.decode())    
-        msg = input('Enter your message: ')
+        print(pp('\nReceived data: ', 'BG'), data)
+        print(pp('Decrypted msg in server: ', 'BG'), plaintext.decode())    
+        msg = input(pp('\nEnter your message: ', 'C'))
         hexIV = hex(IV)[2:8].zfill(16)
         encobj = AES.new(hashlib.sha256(str(shared_key).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
         encrypted_msg = encobj.encrypt(msg.encode())

@@ -5,6 +5,7 @@ import RSA
 import elgamal
 from Crypto.Util import Counter
 from Crypto.Cipher import AES
+from pp import pp
 
 HOST = '127.0.0.1'
 PORT = 3000
@@ -54,15 +55,16 @@ C = encrypt_key(EXCHANGE_MODE)
 data = f'shared_key@{C}'
 client_socket.send(data.encode('utf-8'))
 
+print (pp(f'\nReady for secure communication using {EXCHANGE_MODE}!\n', 'BM'))
 
 while True:
-    print ('Ready for secure communication!')
 
-    msg = input('Enter your message: ')
+    msg = input(pp('\nEnter your message: ', 'C'))
     hexIV = hex(IV)[2:8].zfill(16)
     encobj = AES.new(hashlib.sha256(str(SHARED_KEY).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
     encrypted_msg = encobj.encrypt(msg.encode())
     client_socket.send(encrypted_msg)
+    print('Waiting for messages...')
     data = client_socket.recv(1024)
 
     if not data:
@@ -71,6 +73,6 @@ while True:
     hexIV = hex(IV)[2:8].zfill(16)
     encobj = AES.new(hashlib.sha256(str(SHARED_KEY).encode()).digest(), AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(hexIV.encode(), byteorder='big')))
     plaintext = encobj.decrypt(data)
-    print("Received data: ", data)
-    print("Decrypted msg in server: ", plaintext.decode())
+    print(pp('\nReceived data: ', 'BG'), data)
+    print(pp('Decrypted msg in server: ', 'BG'), plaintext.decode())
 
