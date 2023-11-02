@@ -27,32 +27,9 @@ def elgamal_generate():
 def dh_generate():
     pass
 
-def rsa_generate():
-    p = 23
-    q = 11
-    n = p*q
-    phi = (p-1)*(q-1)
-    e = 2
-
-    while(e<phi):
-        if (math.gcd(e, phi) == 1):
-            break
-        else:
-            e += 1
-    
-    k = 2
-    d = ((k*phi)+1)/e
-    # print("d =", d)
-    # print(f'Public key: {e, n}')
-    # print(f'Private key: {d, n}')
-    return ({"d": d, "n": n}, {"e": e, "n": n})
-
 def decrypt_key(value):
     global private_key
 
-    # decryption
-    # M = pow(int(float(value)), private_key['d'])
-    # sk = math.fmod(M, private_key['n'])
     return RSA.rsa_decrypt(private_key, int(value))
 
 def generate_pub_priv_key():
@@ -66,41 +43,10 @@ def generate_pub_priv_key():
         return RSA.rsa_generate_key(113, 23)
 
 
-# def encrypt_key(mode: str, shared_key):
-#     global public_key
-
-#     if mode == 'ElGamal':
-#         c = elgamal_generate()
-#     elif mode == 'DH':
-#         c = dh_generate()
-#     elif mode == 'RSA':
-#         c = RSA.rsa_encrypt(public_key, shared_key)
-#     return c
-
-def process_request(client_socket, data):
-    global public_key, shared_key, private_key, exchange_mode
-
-    ctrl, value = data.split("@", 1)
-
-    if ctrl == 'key_exchange_mode':
-        exchange_mode = value
-        (private_key, public_key) = generate_pub_priv_key(value)
-        data = f'public_key:{public_key}'
-        client_socket.send(str(public_key).encode('utf-8'))
-       
-
-    elif ctrl == 'msg':
-        encobj = AES.new(shared_key, AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(IV.encode(), byteorder='big')))
-        encobj.decrypt(value)
-    elif ctrl == 'shared_key':
-        shared_key = decrypt_key(value)
-
-def send_msg_to_client(msg):
-    pass
-
-
 def handle_client(client_socket):
     global public_key, shared_key, private_key, exchange_mode
+
+    client_address = client_socket.getpeername()
 
     data = client_socket.recv(1024).decode('utf-8')
 
@@ -120,6 +66,7 @@ def handle_client(client_socket):
         data = client_socket.recv(1024)
 
         if not data:
+            print(client_address, " exited! Ready for new connections...")
             break
 
         hexIV = hex(IV)[2:8].zfill(16)

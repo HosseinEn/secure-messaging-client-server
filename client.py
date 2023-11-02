@@ -27,8 +27,6 @@ def encrypt_key(mode: str):
     global public_key
 
     if mode == 'RSA':
-        # C = pow(SHARED_KEY, public_key['e'])
-        # C = math.fmod(C, public_key['n'])
         return RSA.rsa_encrypt(public_key, SHARED_KEY)
 
 
@@ -43,23 +41,6 @@ def send_encrypted_msg():
     while True:
         msg = input()
         client_socket.send(msg.encode('utf-8'))
-
-def process_response(client_socket, response):
-    global public_key
-
-    ctrl, value = response.split("@", 1)
-
-    if ctrl == 'public_key':
-        public_key = value
-        # encryption
-        C = encrypt_key('RSA')
-        data = f'shared_key:{C}'
-        client_socket.send(data.encode('utf-8'))
-        pass
-    elif ctrl == 'msg':
-        encobj = AES.new(SHARED_KEY, AES.MODE_CTR, counter=Counter.new(128, initial_value=int.from_bytes(IV.encode(), byteorder='big')))
-        (encobj.decrypt(response))
-
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = (HOST, PORT)
@@ -78,7 +59,7 @@ response = client_socket.recv(1024).decode('utf-8')
 public_key = ast.literal_eval(response.split("@", 1)[1])
 
 
-# encryption
+
 C = encrypt_key('RSA')
 data = f'shared_key@{C}'
 client_socket.send(data.encode('utf-8'))
