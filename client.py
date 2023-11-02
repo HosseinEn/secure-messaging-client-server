@@ -12,7 +12,7 @@ PORT = 3000
 SHARED_KEY = 22
 IV = 10
 
-# Maybe we should exchange IV too!!!
+# TODO Maybe we should exchange IV too!!!
 
 def encrypt_key(mode: str):
     global public_key
