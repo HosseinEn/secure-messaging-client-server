@@ -1,3 +1,5 @@
-.vscode
-__pycache__
-elgamal
+*
+!elgamal.py
+!client.py
+!server.py
+!RSA.py
